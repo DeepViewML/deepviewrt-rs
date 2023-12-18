@@ -1,6 +1,11 @@
 use crate::{engine::Engine, error::Error};
 use deepviewrt_sys as ffi;
-use std::{cell::Cell, ffi::c_void, io, ops::Deref};
+use std::{
+    cell::Cell,
+    ffi::c_void,
+    io,
+    ops::{Deref, DerefMut},
+};
 
 #[derive(Debug)]
 pub enum TensorType {
@@ -58,7 +63,26 @@ impl<'a, T> Deref for TensorData<'_, T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
-        return self.data;
+        self.data
+    }
+}
+
+pub struct TensorDataMut<'a, T> {
+    tensor: &'a mut Tensor,
+    data: &'a mut [T],
+}
+
+impl<'a, T> Deref for TensorDataMut<'_, T> {
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        self.data
+    }
+}
+
+impl<'a, T> DerefMut for TensorDataMut<'_, T> {
+    fn deref_mut(&mut self) -> &mut [T] {
+        self.data
     }
 }
 
@@ -181,8 +205,24 @@ impl Tensor {
         return Ok(());
     }
 
+    pub fn randomize(&mut self) -> Result<(), Error> {
+        let err = unsafe { ffi::nn_tensor_randomize(self.ptr) };
+        if err != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(err));
+        }
+        Ok(())
+    }
+
     fn mapro(&self) -> Result<*const ::std::os::raw::c_void, Error> {
         let ret = unsafe { ffi::nn_tensor_mapro(self.ptr) };
+        if ret.is_null() {
+            return Err(Error::WrapperError("nn_tensor_mapro failed".to_string()));
+        }
+        return Ok(ret);
+    }
+
+    fn maprw(&self) -> Result<*mut ::std::os::raw::c_void, Error> {
+        let ret = unsafe { ffi::nn_tensor_maprw(self.ptr) };
         if ret.is_null() {
             return Err(Error::WrapperError("nn_tensor_mapro failed".to_string()));
         }
@@ -287,6 +327,16 @@ impl Tensor {
             tensor: self,
             data: sret,
         });
+    }
+
+    pub fn maprw_f32<'a>(&'a mut self) -> Result<TensorDataMut<'a, f32>, Error> {
+        let ptr = self.maprw()? as *mut f32;
+        let size = self.size();
+        let sret = unsafe { std::slice::from_raw_parts_mut(ptr, size as usize) };
+        Ok(TensorDataMut {
+            tensor: self,
+            data: sret,
+        })
     }
 
     unsafe fn unmap(&self) {
