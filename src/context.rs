@@ -1,4 +1,4 @@
-use crate::{engine::Engine, error::Error, tensor::Tensor};
+use crate::{engine::Engine, error::Error, tensor::Tensor, model};
 use deepviewrt_sys as ffi;
 use std::{
     cell::{Cell, RefCell},
@@ -10,8 +10,7 @@ pub struct Context {
     owned: bool,
     ptr: *mut ffi::NNContext,
     engine: Cell<Option<Engine>>,
-    model_data: Vec<u8>,
-    // model: Cell<Option<Model>>,
+    model: Vec<u8>,
     tensors: RefCell<Vec<(i32, Tensor)>>,
 }
 
@@ -44,8 +43,7 @@ impl Context {
             owned: true,
             ptr: ret,
             engine: Cell::new(engine),
-            model_data: Vec::new(),
-            // model: Cell::new(None),
+            model: Vec::new(),
             tensors,
         })
     }
@@ -78,6 +76,30 @@ impl Context {
         return unsafe { (&*self.engine.as_ptr()).as_ref() };
     }
 
+    pub fn model(&self) -> &Vec<u8> {
+        &self.model
+    }
+
+    pub fn input(&self, index: usize) -> Result<&Tensor, Error> {
+        let inputs = model::inputs(&self.model)?;
+        self.tensor_index(inputs[index] as usize)
+    }
+
+    pub fn input_mut(&mut self, index: usize) -> Result<&mut Tensor, Error> {
+        let inputs = model::inputs(&self.model)?;
+        self.tensor_index_mut(inputs[index] as usize)
+    }
+
+    pub fn output(&self, index: usize) -> Result<&Tensor, Error> {
+        let outputs = model::outputs(&self.model)?;
+        self.tensor_index(outputs[index] as usize)
+    }
+
+    pub fn output_mut(&mut self, index: usize) -> Result<&mut Tensor, Error> {
+        let outputs = model::outputs(&self.model)?;
+        self.tensor_index_mut(outputs[index] as usize)
+    }
+
     // pub fn model(&self) -> Option<&Model> {
     //     if !self.model.as_ptr().is_null() {
     //         let model_ref = unsafe { &*self.model.as_ptr() };
@@ -106,14 +128,14 @@ impl Context {
     //     None
     // }
 
-    pub fn load_model(&mut self, data: Vec<u8>) -> Result<(), Error> {
+    pub fn load_model(&mut self, model: Vec<u8>) -> Result<(), Error> {
         self.unload_model();
-        self.model_data = data;
+        self.model = model;
         let ret = unsafe {
             ffi::nn_context_model_load(
                 self.ptr,
-                self.model_data.len(),
-                self.model_data.as_ptr() as *const std::ffi::c_void,
+                self.model.len(),
+                self.model.as_ptr() as *const std::ffi::c_void,
             )
         };
         if ret != ffi::NNError_NN_SUCCESS {
@@ -126,7 +148,7 @@ impl Context {
         unsafe { ffi::nn_context_model_unload(self.ptr) };
         let tensors_ref: Vec<(i32, Tensor)> = Vec::new();
         self.tensors = RefCell::new(tensors_ref);
-        self.model_data = Vec::new();
+        self.model = Vec::new();
         // self.model.set(None);
     }
 
@@ -224,14 +246,14 @@ impl Context {
 
         let tensors_ref: Vec<(i32, Tensor)> = Vec::new();
         let tensors = RefCell::new(tensors_ref);
-        return Ok(Self {
+        Ok(Self {
             owned: false,
             ptr,
             engine: Cell::new(None),
-            model_data: Vec::new(),
+            model: Vec::new(),
             // model: Cell::new(None),
             tensors,
-        });
+        })
     }
 }
 
