@@ -17,7 +17,7 @@ pub struct Context {
 
 impl Context {
     pub fn sizeof() -> usize {
-        return unsafe { ffi::nn_context_sizeof() };
+        unsafe { ffi::nn_context_sizeof() }
     }
 
     pub fn new(engine: Engine, memory_size: usize, cache_size: usize) -> Result<Context, Error> {
@@ -72,7 +72,7 @@ impl Context {
         }
         let engine = Engine::wrap(ret).unwrap();
         self.engine.set(Some(engine));
-        return unsafe { (&*self.engine.as_ptr()).as_ref() };
+        return unsafe { (*self.engine.as_ptr()).as_ref() };
     }
 
     pub fn model(&self) -> Option<&Model> {
@@ -117,7 +117,8 @@ impl Context {
         if ret != ffi::NNError_NN_SUCCESS {
             return Err(Error::from(ret));
         }
-        return Ok(());
+
+        Ok(())
     }
 
     pub fn unload_model(&mut self) {
@@ -155,14 +156,15 @@ impl Context {
             }
         };
         let tensors_ref = unsafe { &*self.tensors.as_ptr() };
-        return {
+        {
             for (index_, tensor) in tensors_ref {
                 if index_ == &index {
                     return Ok(tensor);
                 }
             }
+
             Err(Error::WrapperError(String::from("Tensor not found")))
-        };
+        }
     }
 
     pub fn tensor_index_mut(&mut self, index: usize) -> Result<&mut Tensor, Error> {
@@ -181,14 +183,15 @@ impl Context {
             }
         }
         let tensors_ref = self.tensors.get_mut();
-        return {
+        {
             for (index_, tensor) in tensors_ref {
                 if index_ == &(index as i32) {
                     return Ok(tensor);
                 }
             }
+
             Err(Error::WrapperError(String::from("Tensor not found")))
-        };
+        }
     }
 
     pub fn tensor_index(&self, index: usize) -> Result<&Tensor, Error> {
@@ -207,14 +210,15 @@ impl Context {
             }
         }
         let tensors_ref = unsafe { &*self.tensors.as_ptr() };
-        return {
+        {
             for (index_, tensor) in tensors_ref {
                 if index_ == &(index as i32) {
                     return Ok(tensor);
                 }
             }
+
             Err(Error::WrapperError(String::from("Tensor not found")))
-        };
+        }
     }
 
     pub unsafe fn from_ptr(ptr: *mut ffi::NNContext) -> Result<Self, Error> {
@@ -224,14 +228,15 @@ impl Context {
 
         let tensors_ref: Vec<(i32, Tensor)> = Vec::new();
         let tensors = RefCell::new(tensors_ref);
-        return Ok(Self {
+
+        Ok(Self {
             owned: false,
             ptr,
             engine: Cell::new(None),
             model_data: None,
             model: Cell::new(None),
             tensors,
-        });
+        })
     }
 }
 
