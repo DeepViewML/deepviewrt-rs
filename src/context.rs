@@ -1,4 +1,4 @@
-use crate::{engine::Engine, error::Error, tensor::Tensor, model};
+use crate::{engine::Engine, error::Error, model, tensor::Tensor};
 use deepviewrt_sys as ffi;
 use std::{
     cell::{Cell, RefCell},
@@ -73,7 +73,7 @@ impl Context {
         }
         let engine = Engine::wrap(ret).unwrap();
         self.engine.set(Some(engine));
-        return unsafe { (&*self.engine.as_ptr()).as_ref() };
+        return unsafe { (*self.engine.as_ptr()).as_ref() };
     }
 
     pub fn model(&self) -> &Vec<u8> {
@@ -203,14 +203,15 @@ impl Context {
             }
         }
         let tensors_ref = self.tensors.get_mut();
-        return {
+        {
             for (index_, tensor) in tensors_ref {
                 if index_ == &(index as i32) {
                     return Ok(tensor);
                 }
             }
+
             Err(Error::WrapperError(String::from("Tensor not found")))
-        };
+        }
     }
 
     pub fn tensor_index(&self, index: usize) -> Result<&Tensor, Error> {
@@ -229,14 +230,15 @@ impl Context {
             }
         }
         let tensors_ref = unsafe { &*self.tensors.as_ptr() };
-        return {
+        {
             for (index_, tensor) in tensors_ref {
                 if index_ == &(index as i32) {
                     return Ok(tensor);
                 }
             }
+
             Err(Error::WrapperError(String::from("Tensor not found")))
-        };
+        }
     }
 
     pub unsafe fn from_ptr(ptr: *mut ffi::NNContext) -> Result<Self, Error> {
@@ -246,6 +248,7 @@ impl Context {
 
         let tensors_ref: Vec<(i32, Tensor)> = Vec::new();
         let tensors = RefCell::new(tensors_ref);
+
         Ok(Self {
             owned: false,
             ptr,
