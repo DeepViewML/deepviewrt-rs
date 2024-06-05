@@ -31,14 +31,14 @@ impl Engine {
         if load_ret != ffi::NNError_NN_SUCCESS {
             return Err(Error::from(load_ret));
         }
-        return Ok(engine);
+        Ok(engine)
     }
 
     pub fn wrap(ptr: *mut ffi::NNEngine) -> Result<Self, Error> {
         if ptr.is_null() {
             return Err(Error::Null());
         }
-        return Ok(Engine { owned: false, ptr });
+        Ok(Engine { owned: false, ptr })
     }
 
     pub fn name(&self) -> Option<&str> {

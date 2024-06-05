@@ -29,21 +29,21 @@ impl TryFrom<u32> for TensorType {
 
     fn try_from(value: u32) -> Result<TensorType, Self::Error> {
         match value {
-            0 => return Ok(TensorType::RAW),
-            1 => return Ok(TensorType::STR),
-            2 => return Ok(TensorType::I8),
-            3 => return Ok(TensorType::U8),
-            4 => return Ok(TensorType::I16),
-            5 => return Ok(TensorType::U16),
-            6 => return Ok(TensorType::I32),
-            7 => return Ok(TensorType::U32),
-            8 => return Ok(TensorType::I64),
-            9 => return Ok(TensorType::U64),
-            10 => return Ok(TensorType::F16),
-            11 => return Ok(TensorType::F32),
-            12 => return Ok(TensorType::F64),
-            _ => return Err(()),
-        };
+            0 => Ok(TensorType::RAW),
+            1 => Ok(TensorType::STR),
+            2 => Ok(TensorType::I8),
+            3 => Ok(TensorType::U8),
+            4 => Ok(TensorType::I16),
+            5 => Ok(TensorType::U16),
+            6 => Ok(TensorType::I32),
+            7 => Ok(TensorType::U32),
+            8 => Ok(TensorType::I64),
+            9 => Ok(TensorType::U64),
+            10 => Ok(TensorType::F16),
+            11 => Ok(TensorType::F32),
+            12 => Ok(TensorType::F64),
+            _ => Err(()),
+        }
     }
 }
 
@@ -93,7 +93,7 @@ impl Deref for Tensor {
     type Target = ffi::NNTensor;
 
     fn deref(&self) -> &Self::Target {
-        return unsafe { &*(self.ptr) };
+        unsafe { &*(self.ptr) }
     }
 }
 
@@ -110,12 +110,12 @@ impl Tensor {
             return Err(Error::IoError(err_kind));
         }
 
-        return Ok(Self {
+        Ok(Self {
             owned: true,
             engine: Cell::new(None),
             ptr,
             scales: None,
-        });
+        })
     }
 
     pub fn alloc(&self, ttype: TensorType, n_dims: i32, shape: &[i32; 3]) -> Result<(), Error> {
@@ -125,7 +125,25 @@ impl Tensor {
             return Err(Error::from(ret));
         }
 
-        return Ok(());
+        Ok(())
+    }
+
+    pub fn copy_from(&mut self, src: &Self) -> Result<(), Error> {
+        let ret = unsafe { ffi::nn_tensor_copy(self.ptr, src.ptr) };
+        if ret != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(ret));
+        }
+
+        Ok(())
+    }
+
+    pub fn quantize(&self, dest: &mut Self, axis: i32) -> Result<(), Error> {
+        let ret = unsafe { ffi::nn_tensor_quantize(dest.to_mut_ptr(), self.ptr, axis) };
+        if ret != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(ret));
+        }
+
+        Ok(())
     }
 
     pub fn dequantize(&self, dest: &mut Self) -> Result<(), Error> {
@@ -134,7 +152,7 @@ impl Tensor {
             return Err(Error::from(ret));
         }
 
-        return Ok(());
+        Ok(())
     }
 
     pub fn set_tensor_type(&self, tensor_type: TensorType) -> Result<(), Error> {
@@ -143,12 +161,12 @@ impl Tensor {
         if ret != ffi::NNError_NN_SUCCESS {
             return Err(Error::from(ret));
         }
-        return Ok(());
+        Ok(())
     }
 
     pub fn tensor_type(&self) -> TensorType {
         let ret = unsafe { ffi::nn_tensor_type(self.ptr) };
-        return TensorType::try_from(ret).unwrap();
+        TensorType::try_from(ret).unwrap()
     }
 
     pub fn engine(&self) -> Option<&Engine> {
@@ -158,29 +176,29 @@ impl Tensor {
         }
         let engine = Engine::wrap(ret).unwrap();
         self.engine.set(Some(engine));
-        return unsafe { (&*self.engine.as_ptr()).as_ref() };
+        return unsafe { (*self.engine.as_ptr()).as_ref() };
     }
 
     pub fn shape(&self) -> &[i32] {
         let ret = unsafe { ffi::nn_tensor_shape(self.ptr) };
         let ra = unsafe { std::slice::from_raw_parts(ret, 4) };
-        return ra;
+        ra
     }
 
     pub fn dims(&self) -> i32 {
-        return unsafe { ffi::nn_tensor_dims(self.ptr) };
+        unsafe { ffi::nn_tensor_dims(self.ptr) }
     }
 
     pub fn volume(&self) -> i32 {
-        return unsafe { ffi::nn_tensor_volume(self.ptr) };
+        unsafe { ffi::nn_tensor_volume(self.ptr) }
     }
 
     pub fn size(&self) -> i32 {
-        return unsafe { ffi::nn_tensor_size(self.ptr) };
+        unsafe { ffi::nn_tensor_size(self.ptr) }
     }
 
     pub fn axis(&self) -> i16 {
-        return unsafe { ffi::nn_tensor_axis(self.ptr) as i16 };
+        unsafe { ffi::nn_tensor_axis(self.ptr) as i16 }
     }
 
     pub fn zeros(&self) -> Result<&[i32], Error> {
@@ -199,10 +217,8 @@ impl Tensor {
                 "scales should either have length of 1 or equal to channel_dimension (axis)",
             )));
         }
-        unsafe {
-            ffi::nn_tensor_set_scales(self.ptr, scales.len(), scales.as_ptr() as *const f32, 0)
-        };
-        return Ok(());
+        unsafe { ffi::nn_tensor_set_scales(self.ptr, scales.len(), scales.as_ptr(), 0) };
+        Ok(())
     }
 
     pub fn randomize(&mut self) -> Result<(), Error> {
@@ -218,7 +234,7 @@ impl Tensor {
         if ret.is_null() {
             return Err(Error::WrapperError("nn_tensor_mapro failed".to_string()));
         }
-        return Ok(ret);
+        Ok(ret)
     }
 
     fn maprw(&self) -> Result<*mut ::std::os::raw::c_void, Error> {
@@ -226,113 +242,113 @@ impl Tensor {
         if ret.is_null() {
             return Err(Error::WrapperError("nn_tensor_mapro failed".to_string()));
         }
-        return Ok(ret);
+        Ok(ret)
     }
 
-    pub fn mapro_u8<'a>(&'a self) -> Result<TensorData<'a, u8>, Error> {
+    pub fn mapro_u8(&self) -> Result<TensorData<'_, u8>, Error> {
         let ptr = self.mapro()? as *const u8;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_u16<'a>(&'a self) -> Result<TensorData<'a, u16>, Error> {
+    pub fn mapro_u16(&self) -> Result<TensorData<'_, u16>, Error> {
         let ptr = self.mapro()? as *const u16;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_u32<'a>(&'a self) -> Result<TensorData<'a, u32>, Error> {
+    pub fn mapro_u32(&self) -> Result<TensorData<'_, u32>, Error> {
         let ptr = self.mapro()? as *const u32;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_u64<'a>(&'a self) -> Result<TensorData<'a, u64>, Error> {
+    pub fn mapro_u64(&self) -> Result<TensorData<'_, u64>, Error> {
         let ptr = self.mapro()? as *const u64;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_i8<'a>(&'a self) -> Result<TensorData<'a, i8>, Error> {
+    pub fn mapro_i8(&self) -> Result<TensorData<'_, i8>, Error> {
         let ptr = self.mapro()? as *const i8;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_i16<'a>(&'a self) -> Result<TensorData<'a, i16>, Error> {
+    pub fn mapro_i16(&self) -> Result<TensorData<'_, i16>, Error> {
         let ptr = self.mapro()? as *const i16;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_i32<'a>(&'a self) -> Result<TensorData<'a, i32>, Error> {
+    pub fn mapro_i32(&self) -> Result<TensorData<'_, i32>, Error> {
         let ptr = self.mapro()? as *const i32;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_i64<'a>(&'a self) -> Result<TensorData<'a, i64>, Error> {
+    pub fn mapro_i64(&self) -> Result<TensorData<'_, i64>, Error> {
         let ptr = self.mapro()? as *const i64;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_f32<'a>(&'a self) -> Result<TensorData<'a, f32>, Error> {
+    pub fn mapro_f32(&self) -> Result<TensorData<'_, f32>, Error> {
         let ptr = self.mapro()? as *const f32;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn mapro_f64<'a>(&'a self) -> Result<TensorData<'a, f64>, Error> {
+    pub fn mapro_f64(&self) -> Result<TensorData<'_, f64>, Error> {
         let ptr = self.mapro()? as *const f64;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts(ptr, size as usize) };
-        return Ok(TensorData {
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
             tensor: self,
             data: sret,
-        });
+        })
     }
 
-    pub fn maprw_f32<'a>(&'a mut self) -> Result<TensorDataMut<'a, f32>, Error> {
+    pub fn maprw_f32(&mut self) -> Result<TensorDataMut<'_, f32>, Error> {
         let ptr = self.maprw()? as *mut f32;
-        let size = self.size();
-        let sret = unsafe { std::slice::from_raw_parts_mut(ptr, size as usize) };
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts_mut(ptr, volume as usize) };
         Ok(TensorDataMut {
             tensor: self,
             data: sret,
@@ -348,16 +364,16 @@ impl Tensor {
             return Err(Error::WrapperError(String::from("ptr is null")));
         }
 
-        return Ok(Tensor {
+        Ok(Tensor {
             owned,
             engine: Cell::new(None),
             ptr,
             scales: None,
-        });
+        })
     }
 
     pub fn to_mut_ptr(&self) -> *mut ffi::NNTensor {
-        return self.ptr;
+        self.ptr
     }
 }
 
