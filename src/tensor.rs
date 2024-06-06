@@ -128,6 +128,26 @@ impl Tensor {
         Ok(())
     }
 
+    /// Assign data to the tensor.
+    ///
+    /// # Safety
+    /// This function is marked unsafe as the owner must guarantee the pointer outlives the tensor.
+    pub unsafe fn assign(
+        &self,
+        ttype: TensorType,
+        n_dims: i32,
+        shape: &[i32; 3],
+        data: *mut c_void,
+    ) -> Result<(), Error> {
+        let ttype_c_uint = (ttype as u32) as std::os::raw::c_uint;
+        let ret = ffi::nn_tensor_assign(self.ptr, ttype_c_uint, n_dims, shape.as_ptr(), data);
+        if ret != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(ret));
+        }
+
+        Ok(())
+    }
+
     pub fn copy_from(&mut self, src: &Self) -> Result<(), Error> {
         let ret = unsafe { ffi::nn_tensor_copy(self.ptr, src.ptr) };
         if ret != ffi::NNError_NN_SUCCESS {
