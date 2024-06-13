@@ -162,6 +162,15 @@ impl Tensor {
         Ok(())
     }
 
+    pub fn fill(&mut self, value: f64) -> Result<(), Error> {
+        let ret = unsafe { ffi::nn_tensor_fill(self.ptr, value) };
+        if ret != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(ret));
+        }
+
+        Ok(())
+    }
+
     pub fn quantize(&self, dest: &mut Self, axis: i32) -> Result<(), Error> {
         let ret = unsafe { ffi::nn_tensor_quantize(dest.to_mut_ptr(), self.ptr, axis) };
         if ret != ffi::NNError_NN_SUCCESS {
