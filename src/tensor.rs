@@ -136,9 +136,14 @@ impl Tensor {
         &self,
         ttype: TensorType,
         n_dims: i32,
-        shape: &[i32; 3],
+        shape: &[i32],
         data: *mut c_void,
     ) -> Result<(), Error> {
+        if shape.len() != n_dims as usize {
+            return Err(Error::WrapperError(String::from(
+                "shape length should be equal to n_dims",
+            )));
+        }
         let ttype_c_uint = (ttype as u32) as std::os::raw::c_uint;
         let ret = ffi::nn_tensor_assign(self.ptr, ttype_c_uint, n_dims, shape.as_ptr(), data);
         if ret != ffi::NNError_NN_SUCCESS {
