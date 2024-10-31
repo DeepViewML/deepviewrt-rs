@@ -131,7 +131,8 @@ impl Tensor {
     /// Assign data to the tensor.
     ///
     /// # Safety
-    /// This function is marked unsafe as the owner must guarantee the pointer outlives the tensor.
+    /// This function is marked unsafe as the owner must guarantee the pointer
+    /// outlives the tensor.
     pub unsafe fn assign(
         &self,
         ttype: TensorType,
@@ -263,7 +264,7 @@ impl Tensor {
         Ok(())
     }
 
-    fn mapro(&self) -> Result<*const ::std::os::raw::c_void, Error> {
+    fn mapro_raw(&self) -> Result<*const ::std::os::raw::c_void, Error> {
         let ret = unsafe { ffi::nn_tensor_mapro(self.ptr) };
         if ret.is_null() {
             return Err(Error::WrapperError("nn_tensor_mapro failed".to_string()));
@@ -271,7 +272,7 @@ impl Tensor {
         Ok(ret)
     }
 
-    fn maprw(&self) -> Result<*mut ::std::os::raw::c_void, Error> {
+    fn maprw_raw(&self) -> Result<*mut ::std::os::raw::c_void, Error> {
         let ret = unsafe { ffi::nn_tensor_maprw(self.ptr) };
         if ret.is_null() {
             return Err(Error::WrapperError("nn_tensor_mapro failed".to_string()));
@@ -280,7 +281,7 @@ impl Tensor {
     }
 
     pub fn mapro_u8(&self) -> Result<TensorData<'_, u8>, Error> {
-        let ptr = self.mapro()? as *const u8;
+        let ptr = self.mapro_raw()? as *const u8;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -290,7 +291,7 @@ impl Tensor {
     }
 
     pub fn mapro_u16(&self) -> Result<TensorData<'_, u16>, Error> {
-        let ptr = self.mapro()? as *const u16;
+        let ptr = self.mapro_raw()? as *const u16;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -300,7 +301,7 @@ impl Tensor {
     }
 
     pub fn mapro_u32(&self) -> Result<TensorData<'_, u32>, Error> {
-        let ptr = self.mapro()? as *const u32;
+        let ptr = self.mapro_raw()? as *const u32;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -310,7 +311,7 @@ impl Tensor {
     }
 
     pub fn mapro_u64(&self) -> Result<TensorData<'_, u64>, Error> {
-        let ptr = self.mapro()? as *const u64;
+        let ptr = self.mapro_raw()? as *const u64;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -320,7 +321,7 @@ impl Tensor {
     }
 
     pub fn mapro_i8(&self) -> Result<TensorData<'_, i8>, Error> {
-        let ptr = self.mapro()? as *const i8;
+        let ptr = self.mapro_raw()? as *const i8;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -330,7 +331,7 @@ impl Tensor {
     }
 
     pub fn mapro_i16(&self) -> Result<TensorData<'_, i16>, Error> {
-        let ptr = self.mapro()? as *const i16;
+        let ptr = self.mapro_raw()? as *const i16;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -340,7 +341,7 @@ impl Tensor {
     }
 
     pub fn mapro_i32(&self) -> Result<TensorData<'_, i32>, Error> {
-        let ptr = self.mapro()? as *const i32;
+        let ptr = self.mapro_raw()? as *const i32;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -350,7 +351,7 @@ impl Tensor {
     }
 
     pub fn mapro_i64(&self) -> Result<TensorData<'_, i64>, Error> {
-        let ptr = self.mapro()? as *const i64;
+        let ptr = self.mapro_raw()? as *const i64;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -360,7 +361,7 @@ impl Tensor {
     }
 
     pub fn mapro_f32(&self) -> Result<TensorData<'_, f32>, Error> {
-        let ptr = self.mapro()? as *const f32;
+        let ptr = self.mapro_raw()? as *const f32;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -370,7 +371,17 @@ impl Tensor {
     }
 
     pub fn mapro_f64(&self) -> Result<TensorData<'_, f64>, Error> {
-        let ptr = self.mapro()? as *const f64;
+        let ptr = self.mapro_raw()? as *const f64;
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
+        Ok(TensorData {
+            tensor: self,
+            data: sret,
+        })
+    }
+
+    pub fn mapro<T>(&self) -> Result<TensorData<'_, T>, Error> {
+        let ptr = self.mapro_raw()? as *const T;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts(ptr, volume as usize) };
         Ok(TensorData {
@@ -380,7 +391,17 @@ impl Tensor {
     }
 
     pub fn maprw_f32(&mut self) -> Result<TensorDataMut<'_, f32>, Error> {
-        let ptr = self.maprw()? as *mut f32;
+        let ptr = self.maprw_raw()? as *mut f32;
+        let volume = self.volume();
+        let sret = unsafe { std::slice::from_raw_parts_mut(ptr, volume as usize) };
+        Ok(TensorDataMut {
+            tensor: self,
+            data: sret,
+        })
+    }
+
+    pub fn maprw<T>(&mut self) -> Result<TensorDataMut<'_, T>, Error> {
+        let ptr = self.maprw_raw()? as *mut T;
         let volume = self.volume();
         let sret = unsafe { std::slice::from_raw_parts_mut(ptr, volume as usize) };
         Ok(TensorDataMut {
