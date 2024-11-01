@@ -447,3 +447,9 @@ impl<'a, T> Drop for TensorData<'a, T> {
         unsafe { self.tensor.unmap() };
     }
 }
+
+impl<'a, T> Drop for TensorDataMut<'a, T> {
+    fn drop(&mut self) {
+        unsafe { self.tensor.unmap() };
+    }
+}
