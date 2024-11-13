@@ -22,6 +22,10 @@ exclude = [
 [lib]
 name = "deepviewrt"
 
+[[bin]]
+name = "modelrunner"
+path = "src/modelrunner.rs"
+
 [workspace]
 members = ["deepviewrt-sys"]
 
