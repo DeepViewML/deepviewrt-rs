@@ -275,7 +275,7 @@ impl Tensor {
     fn maprw_raw(&self) -> Result<*mut ::std::os::raw::c_void, Error> {
         let ret = unsafe { ffi::nn_tensor_maprw(self.ptr) };
         if ret.is_null() {
-            return Err(Error::WrapperError("nn_tensor_mapro failed".to_string()));
+            return Err(Error::WrapperError("nn_tensor_maprw failed".to_string()));
         }
         Ok(ret)
     }

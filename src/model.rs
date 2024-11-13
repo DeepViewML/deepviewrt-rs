@@ -1,4 +1,4 @@
-use crate::{error::Error};
+use crate::error::Error;
 use deepviewrt_sys as ffi;
 use std::{
     ffi::{c_void, CStr, CString},
@@ -47,7 +47,6 @@ pub fn serial(&self) -> Result<&str, Error> {
 
 pub fn inputs(model: &[u8]) -> Result<Vec<u32>, Error> {
     let mut len: usize = 0;
-
     let indices =
         unsafe { ffi::nn_model_inputs(model.as_ptr() as *const c_void, &mut len as *mut usize) };
     if indices.is_null() {
