@@ -104,6 +104,10 @@ pub fn layer_lookup(model: &[u8], name: &str) -> Result<i32, Error> {
     Ok(ret)
 }
 
+pub fn memory_size(model: &[u8]) -> usize {
+    unsafe { ffi::nn_model_memory_size(model.as_ptr() as *const c_void) }
+}
+
 // pub fn layer_type(&self, index: usize) -> Result<&str, Error> {
 //     let ret = unsafe { ffi::nn_model_layer_type(self.ptr, index) };
 //     if ret.is_null() {
