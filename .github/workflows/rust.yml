@@ -34,7 +34,7 @@ jobs:
     - name: Install Dependencies
       run: |
         curl https://deepviewml.com/apt/key.pub | sudo gpg --dearmor -o /usr/share/keyrings/deepviewml.gpg
-        echo 'deb [signed-by=/usr/share/keyrings/deepviewml.gpg] https://deepviewml.com/apt stable main' | sudo tee /etc/apt/sources.list.d/deepviewml.list
+        echo 'deb [trusted=yes] https://deepviewml.com/apt stable main' | sudo tee /etc/apt/sources.list.d/deepviewml.list
         sudo apt-get update
         sudo apt-get install libdeepview-rt
     - name: Run tests
