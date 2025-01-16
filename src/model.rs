@@ -1,4 +1,4 @@
-use crate::{error::Error};
+use crate::error::Error;
 use deepviewrt_sys as ffi;
 use std::{
     ffi::{c_void, CStr, CString},

@@ -47,7 +47,7 @@ impl Engine {
             return None;
         }
         let name_cstr = unsafe { CStr::from_ptr(ret) };
-        return Some(name_cstr.to_str().unwrap());
+        Some(name_cstr.to_str().unwrap())
     }
 
     pub fn version(&self) -> Option<&str> {
@@ -56,7 +56,7 @@ impl Engine {
             return None;
         }
         let version_cstr = unsafe { CStr::from_ptr(ret) };
-        return Some(version_cstr.to_str().unwrap());
+        Some(version_cstr.to_str().unwrap())
     }
 
     pub unsafe fn to_ptr(&self) -> *const ffi::NNEngine {
