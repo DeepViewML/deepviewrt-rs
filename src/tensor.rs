@@ -211,7 +211,7 @@ impl Tensor {
         }
         let engine = Engine::wrap(ret).unwrap();
         self.engine.set(Some(engine));
-        return unsafe { (*self.engine.as_ptr()).as_ref() };
+        unsafe { (*self.engine.as_ptr()).as_ref() }
     }
 
     pub fn shape(&self) -> &[i32] {
@@ -242,7 +242,7 @@ impl Tensor {
         if ret.is_null() {
             return Err(Error::WrapperError(String::from("zeros returned null")));
         }
-        return unsafe { Ok(std::slice::from_raw_parts(ret, zeros)) };
+        unsafe { Ok(std::slice::from_raw_parts(ret, zeros)) }
     }
 
     pub fn set_scales(&mut self, scales: &[f32]) -> Result<(), Error> {
@@ -442,7 +442,7 @@ impl Drop for Tensor {
     }
 }
 
-impl<'a, T> Drop for TensorData<'a, T> {
+impl<T> Drop for TensorData<'_, T> {
     fn drop(&mut self) {
         unsafe { self.tensor.unmap() };
     }

@@ -73,7 +73,7 @@ impl Context {
         }
         let engine = Engine::wrap(ret).unwrap();
         self.engine.set(Some(engine));
-        return unsafe { (*self.engine.as_ptr()).as_ref() };
+        unsafe { (*self.engine.as_ptr()).as_ref() }
     }
 
     pub fn model(&self) -> &Vec<u8> {

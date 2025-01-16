@@ -15,7 +15,7 @@ pub enum QuantizationType {
 pub fn version() -> &'static str {
     let version = unsafe { ffi::nn_version() };
     let ret_cstr = unsafe { CStr::from_ptr(version) };
-    return ret_cstr.to_str().unwrap();
+    ret_cstr.to_str().unwrap()
 }
 
 pub fn init() {}
