@@ -25,9 +25,14 @@ name = "deepviewrt"
 [[bin]]
 name = "modelrunner"
 path = "src/modelrunner.rs"
+required-features = ["modelrunner"]
 
 [workspace]
 members = ["deepviewrt-sys"]
 
 [dependencies]
 deepviewrt-sys = {version = "0.0.0", path = "deepviewrt-sys"}
+
+[features]
+default = []
+modelrunner = []
