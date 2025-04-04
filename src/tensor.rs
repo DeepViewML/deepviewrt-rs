@@ -216,7 +216,7 @@ impl Tensor {
 
     pub fn shape(&self) -> &[i32] {
         let ret = unsafe { ffi::nn_tensor_shape(self.ptr) };
-        let ra = unsafe { std::slice::from_raw_parts(ret, 4) };
+        let ra = unsafe { std::slice::from_raw_parts(ret, self.dims() as usize) };
         ra
     }
 
