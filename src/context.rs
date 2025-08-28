@@ -144,6 +144,23 @@ impl Context {
         Ok(())
     }
 
+    pub fn load_model_ex(&mut self, model: Vec<u8>, format: i32) -> Result<(), Error> {
+        self.unload_model();
+        self.model = model;
+        let ret = unsafe {
+            ffi::nn_context_model_load_ex(
+                self.ptr,
+                self.model.len(),
+                self.model.as_ptr() as *const std::ffi::c_void,
+                format,
+            )
+        };
+        if ret != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(ret));
+        }
+        Ok(())
+    }
+
     pub fn unload_model(&mut self) {
         unsafe { ffi::nn_context_model_unload(self.ptr) };
         let tensors_ref: Vec<(i32, Tensor)> = Vec::new();
