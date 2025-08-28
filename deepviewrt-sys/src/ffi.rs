@@ -1062,12 +1062,3 @@ unsafe extern "C" {
     #[doc = " Exposes the malloc() function\n"]
     pub fn nn_malloc(size: usize) -> *mut ::std::os::raw::c_void;
 }
-unsafe extern "C" {
-    #[doc = " Model load with additional functionality\n Use format = 1 to add RGB to RGBA layer\n in OpenVX graph"]
-    pub fn nn_context_model_load_ex(
-        context: *mut NNContext,
-        memory_size: usize,
-        memory: *const ::std::os::raw::c_void,
-        format: i32,
-    ) -> NNError;
-}

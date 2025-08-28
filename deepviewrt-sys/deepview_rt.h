@@ -2849,18 +2849,6 @@ NN_API
 void*
 nn_malloc(size_t size);
 
-/**
- * Model load with additional functionality
- * Use format = 1 to add RGB to RGBA layer
- * in OpenVX graph
- */
-NN_API
-NNError
-nn_context_model_load_ex(NNContext *context,
-                         size_t memory_size,
-                         const void *memory,
-                         int32_t format);
-
 #ifdef __cplusplus
 }
 #endif
