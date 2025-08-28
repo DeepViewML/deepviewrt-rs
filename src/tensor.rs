@@ -181,8 +181,29 @@ impl Tensor {
         Ok(())
     }
 
+    pub fn quantize_buffer(&self, src: &[f32], axis: i32) -> Result<(), Error> {
+        let ret = unsafe {
+            ffi::nn_tensor_quantize_buffer(self.to_mut_ptr(), src.len(), src.as_ptr(), axis)
+        };
+        if ret != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(ret));
+        }
+
+        Ok(())
+    }
+
     pub fn dequantize(&self, dest: &mut Self) -> Result<(), Error> {
         let ret = unsafe { ffi::nn_tensor_dequantize(dest.to_mut_ptr(), self.ptr) };
+        if ret != ffi::NNError_NN_SUCCESS {
+            return Err(Error::from(ret));
+        }
+
+        Ok(())
+    }
+
+    pub fn dequantize_buffer(&self, dest: &mut [f32]) -> Result<(), Error> {
+        let ret =
+            unsafe { ffi::nn_tensor_dequantize_buffer(self.ptr, dest.len(), dest.as_mut_ptr()) };
         if ret != ffi::NNError_NN_SUCCESS {
             return Err(Error::from(ret));
         }
@@ -234,6 +255,15 @@ impl Tensor {
 
     pub fn axis(&self) -> i16 {
         unsafe { ffi::nn_tensor_axis(self.ptr) as i16 }
+    }
+
+    pub fn scales(&self) -> Result<&[f32], Error> {
+        let mut scales: usize = 0;
+        let ret = unsafe { ffi::nn_tensor_scales(self.ptr, &mut scales as *mut usize) };
+        if ret.is_null() {
+            return Err(Error::WrapperError(String::from("zeros returned null")));
+        }
+        unsafe { Ok(std::slice::from_raw_parts(ret, scales)) }
     }
 
     pub fn zeros(&self) -> Result<&[i32], Error> {

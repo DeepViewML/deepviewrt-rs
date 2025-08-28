@@ -23,27 +23,25 @@ pub fn serial(&self) -> Result<&str, Error> {
 }
 */
 
-// pub fn label_count(&self) -> Result<i32, Error> {
-//     let ret = unsafe { ffi::nn_model_label_count(self.ptr) };
-//     if ret == 0 {
-//         return Err(Error::WrapperError(String::from(
-//             "No labels or model is invalid",
-//         )));
-//     }
-//     Ok(ret)
-// }
+pub fn label_count(model: &[u8]) -> Result<i32, Error> {
+    let ret = unsafe { ffi::nn_model_label_count(model.as_ptr() as *const c_void) };
+    if ret == 0 {
+        return Err(Error::WrapperError(String::from("Model is invalid")));
+    }
+    Ok(ret)
+}
 
-// pub fn label(&self, index: i32) -> Result<&str, Error> {
-//     let ret = unsafe { ffi::nn_model_label(self.ptr, index) };
-//     if ret.is_null() {
-//         return Err(Error::WrapperError(String::from("label was NULL")));
-//     }
-//     let cstr = unsafe { CStr::from_ptr(ret) };
-//     match cstr.to_str() {
-//         Ok(s) => Ok(s),
-//         Err(e) => Err(Error::WrapperError(e.to_string())),
-//     }
-// }
+pub fn label(model: &[u8], index: i32) -> Result<&str, Error> {
+    let ret = unsafe { ffi::nn_model_label(model.as_ptr() as *const c_void, index) };
+    if ret.is_null() {
+        return Err(Error::WrapperError(String::from("label was NULL")));
+    }
+    let cstr = unsafe { CStr::from_ptr(ret) };
+    match cstr.to_str() {
+        Ok(s) => Ok(s),
+        Err(e) => Err(Error::WrapperError(e.to_string())),
+    }
+}
 
 pub fn inputs(model: &[u8]) -> Result<Vec<u32>, Error> {
     let mut len: usize = 0;
